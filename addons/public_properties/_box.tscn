@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dhm8a03sc6vas"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wrcgv"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g7r2q"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_74kgq"]
+
+[node name="Box" type="Node3D" unique_id=1405436017]
+
+[node name="RigidBody3D" type="RigidBody3D" parent="." unique_id=1785431266]
+metadata/public_properties = PackedStringArray("mass")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D" unique_id=809008487]
+shape = SubResource("BoxShape3D_wrcgv")
+metadata/public_properties = PackedStringArray("shape")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D" unique_id=658508568]
+material_override = SubResource("StandardMaterial3D_g7r2q")
+mesh = SubResource("BoxMesh_74kgq")
+metadata/public_properties = PackedStringArray("material_override", "mesh")
