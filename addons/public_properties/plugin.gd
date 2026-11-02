@@ -104,7 +104,7 @@ static func unpublish_property(object: Object, property_name: StringName) -> voi
 	if property_names: object.notify_property_list_changed()
 	else: object.remove_meta(PUBLIC_PROPERTIES_META)
 
-
+static func unpublish_properties(object: Object) -> void: object.remove_meta(PUBLIC_PROPERTIES_META)
 
 
 #func node_get_child_property(parent: Node, property: StringName, property_prefix: String = DEFAULT_INSPECTOR_PREFIX) -> Variant:

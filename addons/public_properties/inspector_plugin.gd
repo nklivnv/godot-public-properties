@@ -8,24 +8,48 @@ const THEME: Theme = preload("inspector_plugin.theme")
 func _can_handle(object: Object) -> bool: return object is Node
 
 
+static func _create_unpublish_children_properties_button(parent: Node) -> Button:
+	var button := Button.new()
+	button.text = "Unpublish All"
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.pressed.connect(func() -> void:
+		for child: Node in get_owned_children(parent):
+			PublicProperties.unpublish_properties(child)
+		parent.notify_property_list_changed())
+	return button
+
+
+static func _create_editable_children_toggle_button(parent: Node) -> Button:
+	var button := CheckButton.new()
+	button.text = "Editable Children"
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.button_pressed = parent.owner.is_editable_instance(parent)
+	button.toggled.connect(func(toggled_on: bool) -> void: return parent.owner.set_editable_instance(parent, toggled_on))
+	return button
+
+
+static func get_owned_children(parent: Node) -> Array[Node]: return Arrays.filtered(parent.find_children("*", "", true), func(child: Node) -> bool: return child.owner == parent)
+ 
+
 func _parse_begin(object: Object) -> void:
 	var parent: Node = object
 	
+	if parent.scene_file_path and parent.owner: add_custom_control(_create_editable_children_toggle_button(parent))
+	
 	var main_container := FoldableContainer.new()
-	main_container.title = "Editable Children Properties"
+	main_container.title = "Editable Children Public Properties"
 	main_container.theme = THEME
 	main_container.folded = not (
 		EditorInterface.get_edited_scene_root().is_ancestor_of(parent) and
 		EditorInterface.get_edited_scene_root().is_editable_instance(parent))
 	
 	var main_vbox := VBoxContainer.new()
-	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	main_vbox.add_child(_create_unpublish_children_properties_button(parent))
 	main_container.add_child(main_vbox)
 	
 	var any_properties_found = false 
-	
-	for child: Node in parent.find_children("*", "", true):
-		if child.owner != parent: continue
+	for child: Node in get_owned_children(parent):
 		
 		var child_path: NodePath = parent.get_path_to(child)
 		
@@ -69,6 +93,7 @@ func _parse_begin(object: Object) -> void:
 				var editor_property := EditorProperty.new()
 				editor_property.label = property.name.capitalize()
 				editor_property.add_child(editor)
+				if editor is HBoxContainer: editor_property.set_bottom_editor(editor)
 				
 				child_vbox.add_child(editor_property)
 				has_properties = true
@@ -106,10 +131,11 @@ func _create_number_editor(property: Dictionary, parent: Node, property_path: No
 
 
 func _create_vector_editor(property: Dictionary, parent: Node, property_path: NodePath, size: int) -> BoxContainer:
-	var container := VBoxContainer.new()
+	var container := HBoxContainer.new()
 	for i in size:
 		var slider: EditorSpinSlider = _create_slider_editor(property)
 		slider.label = "xyzw"[i]
+		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.value = Utils.object_get_indexed(parent, property_path)[i]
 		slider.editing_integer = property.type in [TYPE_VECTOR2I, TYPE_VECTOR3I, TYPE_VECTOR4I]
 		slider.value_changed.connect(_on_value_changed.bind(parent, str(property_path, ":", slider.label)))
